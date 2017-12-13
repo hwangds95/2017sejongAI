@@ -1,8 +1,8 @@
 from PIL import Image
 import numpy as np
 
-def average_hash(fname, size = 16): 
- img = Image.open(fname) 
+def average_hash(taeyeon, size = 16): 
+ img = Image.open(taeyeon) 
  img = img.convert('L') 
 
  img = img.resize((size, size), Image.ANTIALIAS) 
