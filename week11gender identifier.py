@@ -1,28 +1,37 @@
-import random
-from nltk import NaiveBayesClassifier
-from nltk.classify import accuracy as nltk_accuracy
-from nltk.corpus import names 
-
-def extract_features(word, N=2):
-  last_n_letters = word[-N:]
-  return {'feature': last_n_letters.lower()} 
-
-if __name__=='__main__':
-  male_list = [(name, 'male') for name in names.words('male.txt')]
-  female_list = [(name, 'female') for name in names.words('female.txt')]
-  data = (male_list + female_list) 
-
-  random.seed(5) 
-  random.shuffle(data) 
-  input_names = ['Alexander', 'Danielle', 'David', 'Elsa', 'Angela'] 
-  num_train = int(0.8 * len(data)) 
-
-  for i in range(1, 6):
-    print('\nNumber of end letters:', i)
-    features = [(extract_features(n, i), gender) for (n, gender) in data]
-    train_data, test_data = features[:num_train], features[num_train:] 
-    classifier = NaiveBayesClassifier.train(train_data) 
-    accuracy = round(100 * nltk_accuracy(classifier, test_data), 2)
-    print('Accuracy = ' + str(accuracy) + '%') 
-    for name in input_names:
-      print(name, '==>', classifier.classify(extract_features(name, i))) 
+import numpy as np
+from sklearn.feature_extraction.text import CountVectorizer
+from nltk.corpus import brown
+from text_chunker import chunker
+#브라운 말뭉치에서 데이터읽기
+input_data = ' '.join(brown.words()[:5400])
+# 단어 묶음에 포함될 단어수 설정
+chunk_size = 800
+#텍스트를 단어 묶음으로 나눔
+text_chunks = chunker(input_data, chunk_size)
+# 사전 구조체로 변경
+chunks = []
+for count, chunk in enumerate(text_chunks):
+ d = {'index': count, 'text': chunk}
+ chunks.append(d)
+#CountVectorizer함수를 사용해 단어별 빈도를 체크, 문서 단어 행렬 생성
+#CountVectorizer함수의 첫 번째 매개변수는 최소 문서 빈도며 두 번째 매개변수는 최대 문서 빈도다. 최소 문서 빈도보다
+빈도가 적거나 최대 빈도수보다 높은 단어는 무시
+# 문서 단어 행렬 만들기
+count_vectorizer = CountVectorizer(min_df=7, max_df=20)
+document_term_matrix = count_vectorizer.fit_transform([chunk['text'] for chunk in chunks])
+# 어휘 목록 추출 후 화면에 출력
+vocabulary = np.array(count_vectorizer.get_feature_names())
+print("\nVocabulary:\n", vocabulary)
+# 단어 묶음별 이름 붙이기
+chunk_names = []
+for i in range(len(text_chunks)):
+ chunk_names.append('Chunk-' + str(i+1))
+# 문서 단어 행력 출력
+16/20
+print("\nDocument term matrix:")
+formatted_text = '{:>12}' * (len(chunk_names) + 1)
+print('\n', formatted_text.format('Word', *chunk_names), '\n')
+for word, item in zip(vocabulary, document_term_matrix.T):
+ # 'item' 은 희소 행렬 'csr_matrix'는 데이터 구조체
+ output = [word] + [str(freq) for freq in item.data]
+ print(formatted_text.format(*output)) 
